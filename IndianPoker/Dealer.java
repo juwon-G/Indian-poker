@@ -32,10 +32,13 @@ public class Dealer {
 	}
 	
 	void Plus_betting_stack(int betting) {
-		betting_stack = betting;
+		betting_stack += betting;
 	}
 	void Set_betting_chip(int betting) {
 		betting_chip = betting;
+	}
+	void Set_bet_check(boolean check) {
+		bet_check = check;
 	}
 	int Get_playing_num() {
 		return playing_num;
@@ -73,6 +76,7 @@ public class Dealer {
 	
 	void deal() {
 
+		bet_check = false;
 		betting_chip = ante;
 		betting_stack = 0;
 		int card;
@@ -139,9 +143,11 @@ public class Dealer {
 		
 		String action = "fold";
 		int chip=0;
-		bet_check = false;
 		
 		for(Player p : Player.players) {
+			show_game_info();
+			show_players_info();
+			if(p.human_check) Show_cards(p);
 			while(true) {
 				try {
 					if( (p.Get_status() == status_type.retire) || (p.Get_status() == status_type.fold) ) ;
@@ -168,9 +174,6 @@ public class Dealer {
 			}
 		}
 		
-		show_game_info();
-		show_players_info();
-		
 		if ( m == 0 || ( n == (l/m) ) ) {
 			return false;
 		}
@@ -186,9 +189,9 @@ public class Dealer {
 	
 	void show_players_info() {
 		System.out.println("===============================================");
-		System.out.printf("Name	chips	betting chip	status\n");
+		System.out.printf("Name	chips	betting chip	status	play\n");
 		for(Player p : Player.players) {
-			System.out.printf("%s	%d	%d		%s\n", p.Get_name(), p.Get_holding_chip(), p.Get_betting_chip(), p.Get_status());
+			System.out.printf("%s	%d	%d		%s	%s\n", p.Get_name(), p.Get_holding_chip(), p.Get_betting_chip(), p.Get_status(), p.Get_p_status());
 		}
 		System.out.println("===============================================");
 	}
@@ -220,6 +223,7 @@ public class Dealer {
 		
 		if(winner_count>0) round_winner = tie_deal(winner, winner_count);
 		else round_winner = winner[winner_count];
+		System.out.println("\nwinner = "+Player.players.get(round_winner).Get_name());
 		
 		if(Player.players.get(round_winner).Get_status() == status_type.AllIn) {
 			
@@ -234,6 +238,7 @@ public class Dealer {
 			}
 		}
 		else Player.players.get(round_winner).Plus_holding_chip(betting_stack);
+		System.out.println("win stack : "+betting_stack);
 		
 		for(Player p : Player.players) {
 			if( (p.Get_holding_chip() < ante) && (p.Get_status() != status_type.retire) ) {

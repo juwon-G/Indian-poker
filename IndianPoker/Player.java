@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.Scanner;
 
 enum status_type { play, AllIn, fold, retire }
+enum play_status { not, bet, raise, call, check, fold }
 
 public abstract class Player {
 	
@@ -12,6 +13,7 @@ public abstract class Player {
 	protected int holding_chip;
 	protected int betting_chip;
 	protected status_type status;
+	protected play_status p_status;
 	protected boolean human_check;
 	public static ArrayList<Player> players = new ArrayList<Player>();
 	static Scanner sc = new Scanner(System.in);
@@ -22,6 +24,7 @@ public abstract class Player {
 		holding_chip = rand.nextInt(10)*50+500;
 		betting_chip = 0;
 		status = status_type.play;
+		p_status = play_status.not;
 		
 		players.add(this);
 	}
@@ -31,6 +34,7 @@ public abstract class Player {
 		holding_chip = n;
 		betting_chip = 0;
 		status = status_type.play;
+		p_status = play_status.not;
 		
 		players.add(this);
 	}
@@ -56,6 +60,9 @@ public abstract class Player {
 	status_type Get_status() {
 		return status;
 	}
+	play_status Get_p_status() {
+		return p_status;
+	}
 	
 	void clear(Dealer D) {
 		
@@ -63,8 +70,9 @@ public abstract class Player {
 			betting_chip = D.Get_ante();
 			holding_chip -= betting_chip;
 			status = status_type.play;
+			p_status = play_status.not;
 			
-			D.Plus_betting_stack(D.Get_ante());
+			D.Plus_betting_stack(D.Get_ante()*D.Get_playing_num());
 		}
 	}
 	
@@ -83,7 +91,9 @@ public abstract class Player {
 		D.Plus_betting_stack(chip);
 		D.Set_betting_chip(betting_chip);
 		
-		System.out.println(name + " bet");
+		p_status = play_status.bet;
+		D.Set_bet_check(true);
+		//System.out.println(name + " bet");
 		return true;
 		
 	}
@@ -92,17 +102,20 @@ public abstract class Player {
 
 		if(holding_chip < (D.Get_betting_chip() + rasing_chips - betting_chip)) {
 			call(D);
+			p_status = play_status.call;
 		}
 		else if(holding_chip == (D.Get_betting_chip() + rasing_chips - betting_chip)) {
 			status = status_type.AllIn;
-			System.out.println(name + " AllIn");
+			p_status = play_status.raise;
+			//System.out.println(name + " AllIn");
 		}
 		else {
 			D.Set_betting_chip(D.Get_betting_chip() + rasing_chips);
 			holding_chip -= D.Get_betting_chip() - betting_chip;
 			D.Plus_betting_stack(D.Get_betting_chip() - betting_chip);
 			betting_chip = D.Get_betting_chip();
-			System.out.println(name + " raise");
+			p_status = play_status.raise;
+			//System.out.println(name + " raise");
 		}
 		return true;
 	}
@@ -114,26 +127,28 @@ public abstract class Player {
 			betting_chip += holding_chip;
 			D.Plus_betting_stack(holding_chip);
 			holding_chip = 0;
-			System.out.println(name + " AllIn");
+			//System.out.println(name + " AllIn");
 		}
 		else {
 			holding_chip -= D.Get_betting_chip()-betting_chip;
 			D.Plus_betting_stack(D.Get_betting_chip()-betting_chip);
 			betting_chip = D.Get_betting_chip();
-			System.out.println(name + " call");
+			//System.out.println(name + " call");
 		}
-		
+		p_status = play_status.call;
 		return true;
 	}
 	
 	boolean check() {
-		System.out.println(name + " check");
+		//System.out.println(name + " check");
+		p_status = play_status.check;
 		return true;
 	}
 	
 	boolean fold() {
 		status = status_type.fold;
-		System.out.println(name + " fold");
+		p_status = play_status.fold;
+		//System.out.println(name + " fold");
 		return true;
 	}
 	
@@ -209,13 +224,13 @@ class Computer extends Player{
 		case 1:
 		case 2:
 			if(!D.Get_bet_check()) bet(D.Get_ante(), D);
-			raise(D.Get_ante(), D);
+			else raise(D.Get_ante(), D);
 			break;
 		
 		case 3:
 		case 4:
 		case 5:
-			if(action.equals("check")) check();
+			if(!D.Get_bet_check()) check();
 			else call(D);
 			break;
 		
